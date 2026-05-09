@@ -32,6 +32,19 @@ GENERAL_TEST_VECTORS = [
         ],
     ),
     FileTestVector(
+        filename="test.doc",
+        mimetype="application/msword",
+        charset=None,
+        url=None,
+        must_include=[
+            "93d437af-bc31-492f-a7fc-3cbc9b7c1710",
+            "fd0ed3e3-6373-4446-815c-4b979f6063a9",
+            "#Test for converting .doc files to MD format",
+            "Let’s test it!",
+        ],
+        must_not_include=[],
+    ),
+    FileTestVector(
         filename="test.xlsx",
         mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         charset=None,
