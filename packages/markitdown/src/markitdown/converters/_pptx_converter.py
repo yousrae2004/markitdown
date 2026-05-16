@@ -147,8 +147,17 @@ class PptxConverter(DocumentConverter):
                         b64_string = base64.b64encode(blob).decode("utf-8")
                         md_content += f"\n![{alt_text}](data:{content_type};base64,{b64_string})\n"
                     else:
-                        # A placeholder name
-                        filename = re.sub(r"\W", "", shape.name) + ".jpg"
+                        #save image to disk to reference
+                        content_type = shape.image.content_type or "image/png"
+                        ext = content_type.split("/")[-1]
+                        filename = re.sub(r"\W", "", shape.name) + "." + ext
+
+                        #write image to same directory as output
+                        output_dir = kwargs.get("output_dir", ".")
+                        image_path = os.path.join(output_dir, filename)
+                        with open(image_path, "wb") as img_file:
+                            img_file.write(shape.image.blob)
+
                         md_content += "\n![" + alt_text + "](" + filename + ")\n"
 
                 # Tables
