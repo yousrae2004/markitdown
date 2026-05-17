@@ -42,7 +42,10 @@ GENERAL_TEST_VECTORS = [
             "#Test for converting .doc files to MD format",
             "Let’s test it!",
         ],
-        must_not_include=[],
+        must_not_include=[
+            "d0cf11e0",
+            "\x00"
+        ],
     ),
     FileTestVector(
         filename="test.xlsx",
@@ -81,7 +84,7 @@ GENERAL_TEST_VECTORS = [
             "AutoGen: Enabling Next-Gen LLM Applications via Multi-Agent Conversation",
             "a3f6004b-6f4f-4ea8-bee3-3741f4dc385f",  # chart title
             "2003",  # chart value
-            "![This phrase of the caption is Human-written.](Picture4.jpeg)",
+            "![This phrase of the caption is Human-written.](Picture4_",
         ],
         must_not_include=["data:image/jpeg;base64,/9j/4AAQSkZJRgABAQE"],
     ),

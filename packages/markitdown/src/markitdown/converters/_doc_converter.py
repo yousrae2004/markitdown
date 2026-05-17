@@ -1,10 +1,9 @@
 import sys
-#import re
 from typing import Any, BinaryIO
 
 from .._stream_info import StreamInfo
 from .._base_converter import DocumentConverter, DocumentConverterResult
-from .._exceptions import MissingDependencyException, MISSING_DEPENDENCY_MESSAGE
+from .._exceptions import MissingDependencyException, MISSING_DEPENDENCY_MESSAGE, FileConversionException
 
 #using unword dependency
 _dependency_exc_info = None
@@ -25,7 +24,7 @@ ACCEPTED_FILE_EXTENSIONS = [".doc"]
 class DocConverter(DocumentConverter):
     """
     Converts DOC (Word 97-2003) files to Markdown. Uses unword package 
-    as parser backendto extract body text with heading levels,
+    as parser backend to extract body text with heading levels,
     page breaks, and textbox contents.
     """
 
@@ -64,10 +63,11 @@ class DocConverter(DocumentConverter):
             ) from _dependency_exc_info[1].with_traceback(  # type: ignore[union-attr]
                 _dependency_exc_info[2]
             )
-        assert unword is not None
-
-        # parse_doc takes raw bytes and returns a Document object
-        doc = unword.parse_doc(file_stream.read())
         
+        try:
+            doc = unword.parse_doc(file_stream.read())
+        except Exception as e:
+            raise FileConversionException(f"Failed to parse .doc file: {e}") from e
 
-        return DocumentConverterResult(markdown=doc.body_text.strip(), title=None)
+        title = getattr(doc, "title", None) or getattr(doc, "metadata", {}).get("title")
+        return DocumentConverterResult(markdown=doc.body_text.strip(), title=title)

@@ -4,6 +4,7 @@ import os
 import io
 import re
 import html
+import hashlib
 
 from typing import BinaryIO, Any
 from operator import attrgetter
@@ -140,6 +141,8 @@ class PptxConverter(DocumentConverter):
                     alt_text = re.sub(r"[\r\n\[\]]", " ", alt_text)
                     alt_text = re.sub(r"\s+", " ", alt_text).strip()
 
+                    output_dir = kwargs.get("output_dir")
+
                     # If keep_data_uris is True, use base64 encoding for images
                     if kwargs.get("keep_data_uris", False):
                         blob = shape.image.blob
@@ -148,17 +151,28 @@ class PptxConverter(DocumentConverter):
                         md_content += f"\n![{alt_text}](data:{content_type};base64,{b64_string})\n"
                     else:
                         #save image to disk to reference
+                        blob = shape.image.blob
                         content_type = shape.image.content_type or "image/png"
-                        ext = content_type.split("/")[-1]
-                        filename = re.sub(r"\W", "", shape.name) + "." + ext
+                        ext_map = {"jpeg": "jpg", "svg+xml": "svg"}
+                        raw_ext = content_type.split("/")[-1]
+                        ext = ext_map.get(raw_ext, raw_ext)
 
-                        #write image to same directory as output
+                        #add filename collision handling
+                        suffix = hashlib.md5(blob).hexdigest()[:8]
+                        safe_name = re.sub(r"\W", "", shape.name) if shape.name else "image"
+                        filename = f"{safe_name}_{suffix}.{ext}"
+
                         output_dir = kwargs.get("output_dir", ".")
                         image_path = os.path.join(output_dir, filename)
-                        with open(image_path, "wb") as img_file:
-                            img_file.write(shape.image.blob)
+
+                        try:
+                            with open(image_path, "wb") as img_file:
+                                img_file.write(blob)
+                        except OSError as e:
+                            raise OSError(f"Failed to write image to '{image_path}'.") from e
 
                         md_content += "\n![" + alt_text + "](" + filename + ")\n"
+                        
 
                 # Tables
                 if self._is_table(shape):
